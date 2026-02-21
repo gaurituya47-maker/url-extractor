@@ -2,133 +2,48 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Author Flight - Real-time Dashboard</title>
+    <title>Author Flight Dash</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Kanit', sans-serif; }
-    </style>
 </head>
-<body class="bg-[#0f172a] text-white min-h-screen">
+<body class="bg-slate-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-2 text-blue-400">Author Flight Dashboard</h1>
+        <p id="time" class="text-xs text-slate-500 mb-8"></p>
 
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-                    Author Flight Dashboard
-                </h1>
-                <p id="update-time" class="text-gray-400 text-sm mt-1">กำลังโหลดข้อมูลล่าสุด...</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <p class="text-xs text-slate-400">Views</p>
+                <p id="v" class="text-2xl font-bold">--</p>
             </div>
-            <div class="flex gap-2">
-                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs border border-emerald-500/30">● Live Auto-update</span>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <p class="text-xs text-slate-400">Hearts</p>
+                <p id="h" class="text-2xl font-bold text-pink-500">--</p>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <p class="text-xs text-slate-400">BTC</p>
+                <p id="btc" class="text-xl font-bold text-orange-400">--</p>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <p class="text-xs text-slate-400">ETH</p>
+                <p id="eth" class="text-xl font-bold text-purple-400">--</p>
             </div>
         </div>
-
-        <div class="mb-10">
-            <h2 class="text-xl font-semibold mb-4 text-blue-300">📈 สถิตินิยาย (ReadAWrite)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 shadow-xl">
-                    <p class="text-gray-400 text-sm">ยอดการอ่านทั้งหมด</p>
-                    <p id="novel-views" class="text-3xl font-bold text-white mt-1">--</p>
-                </div>
-                <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 shadow-xl">
-                    <p class="text-gray-400 text-sm">หัวใจ</p>
-                    <p id="novel-hearts" class="text-3xl font-bold text-pink-500 mt-1">--</p>
-                </div>
-                <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 shadow-xl">
-                    <p class="text-gray-400 text-sm">ความคิดเห็น</p>
-                    <p id="novel-comments" class="text-3xl font-bold text-blue-400 mt-1">--</p>
-                </div>
-                <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 shadow-xl">
-                    <p class="text-gray-400 text-sm">เพิ่มเข้าชั้น</p>
-                    <p id="novel-shelf" class="text-3xl font-bold text-emerald-400 mt-1">--</p>
-                </div>
-            </div>
-            <div class="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                <p class="text-sm text-blue-200">เรื่อง: <span id="novel-title" class="font-semibold text-white">กำลังโหลด...</span></p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 space-y-4">
-                <h2 class="text-xl font-semibold text-blue-300">💰 ราคาตลาดปัจจุบัน</h2>
-                <div class="bg-[#1e293b] p-5 rounded-2xl border border-gray-700">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-300">Bitcoin (BTC)</span>
-                        <span id="price-btc" class="text-xl font-bold text-orange-400">--</span>
-                    </div>
-                </div>
-                <div class="bg-[#1e293b] p-5 rounded-2xl border border-gray-700">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-300">Ethereum (ETH)</span>
-                        <span id="price-eth" class="text-xl font-bold text-purple-400">--</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="lg:col-span-2 bg-[#1e293b] p-6 rounded-2xl border border-gray-700">
-                <h2 class="text-xl font-semibold mb-6">Market Overview</h2>
-                <canvas id="marketChart" height="150"></canvas>
-            </div>
+        <div class="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
+            <p class="text-sm">เรื่อง: <span id="title" class="font-bold">กำลังโหลด...</span></p>
         </div>
     </div>
 
     <script>
-        async function updateDashboard() {
-            try {
-                // ดึงข้อมูลจากไฟล์ JSON ที่ Scraper สร้างทิ้งไว้
-                const response = await fetch('dashboard_stats.json');
-                if (!response.ok) throw new Error('ยังไม่มีไฟล์ข้อมูล');
-                const data = await response.json();
-
-                // 1. อัปเดตสถิตินิยาย
-                document.getElementById('novel-title').innerText = data.novel_stats.title;
-                document.getElementById('novel-views').innerText = data.novel_stats.views;
-                document.getElementById('novel-hearts').innerText = data.novel_stats.hearts;
-                document.getElementById('novel-comments').innerText = data.novel_stats.comments;
-                document.getElementById('novel-shelf').innerText = data.novel_stats.shelf;
-
-                // 2. อัปเดตราคาตลาด
-                document.getElementById('price-btc').innerText = `$${data.market['BTC-USD'].toLocaleString()}`;
-                document.getElementById('price-eth').innerText = `$${data.market['ETH-USD'].toLocaleString()}`;
-                
-                // 3. อัปเดตเวลา
-                document.getElementById('update-time').innerText = `อัปเดตข้อมูลล่าสุดเมื่อ: ${data.last_updated}`;
-
-                // 4. สร้างกราฟ
-                const ctx = document.getElementById('marketChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(data.market),
-                        datasets: [{
-                            label: 'Current Price (USD)',
-                            data: Object.values(data.market),
-                            backgroundColor: ['#f59e0b', '#a855f7'],
-                            borderRadius: 10
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: { 
-                            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                            x: { ticks: { color: '#94a3b8' } }
-                        }
-                    }
-                });
-
-            } catch (error) {
-                console.error("Dashboard Error:", error);
-                document.getElementById('update-time').innerText = "รอการรันระบบครั้งแรกจาก GitHub Actions...";
-            }
-        }
-
-        updateDashboard();
-        // รีเฟรชหน้าเว็บทุก 5 นาทีเพื่อเช็คข้อมูลใหม่
-        setInterval(updateDashboard, 300000);
+        fetch('dashboard_stats.json')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('time').innerText = 'อัปเดตล่าสุด: ' + data.last_updated;
+                document.getElementById('v').innerText = data.novel_stats.views;
+                document.getElementById('h').innerText = data.novel_stats.hearts;
+                document.getElementById('btc').innerText = '$' + data.market['BTC-USD'].toLocaleString();
+                document.getElementById('eth').innerText = '$' + data.market['ETH-USD'].toLocaleString();
+                document.getElementById('title').innerText = data.novel_stats.title;
+            }).catch(() => document.getElementById('title').innerText = "รอการรันระบบครั้งแรก...");
     </script>
 </body>
 </html>

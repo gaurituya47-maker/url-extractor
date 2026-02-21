@@ -3,7 +3,7 @@ name: Automation Scraper
 on:
   schedule:
     - cron: '0 0 * * *'
-  workflow_dispatch:     # บรรทัดนี้จะทำให้ปุ่ม Run workflow โผล่ออกมาครับ
+  workflow_dispatch:
 
 jobs:
   build:
@@ -12,19 +12,25 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-      - - name: Install dependencies
-        run: |
-          pip install yfinance pandas requests beautifulsoup4 lxml  # เพิ่ม lxml ตรงนี้
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
       - name: Run Scraper
         run: python main.py
+
       - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add dashboard_stats.json
-          git commit -m "Auto-update stats" || echo "No changes"
+          git commit -m "Auto-update: $(date)" || echo "No changes"
+          git pull --rebase origin main
           git push
