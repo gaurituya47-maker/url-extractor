@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Author & Market Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-10">
+            <h1 class="text-3xl font-bold text-blue-400">📊 Data Dashboard</h1>
+            <p id="update-time" class="text-gray-400 text-sm">Loading last update...</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                <h2 class="text-gray-400 text-sm font-semibold mb-2">BITCOIN (USD)</h2>
+                <p id="btc-price" class="text-4xl font-bold">--</p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                <h2 class="text-gray-400 text-sm font-semibold mb-2">NOVEL VIEWS</h2>
+                <p id="total-views" class="text-4xl font-bold text-green-400">--</p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                <h2 class="text-gray-400 text-sm font-semibold mb-2">ENGAGEMENT (LIKES)</h2>
+                <p id="total-likes" class="text-4xl font-bold text-pink-500">--</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-lg">
+            <h2 class="text-xl font-bold mb-6">Market Overview</h2>
+            <canvas id="marketChart" width="400" height="150"></canvas>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                // ดึงข้อมูลจากไฟล์ JSON ที่ Scraper สร้างไว้
+                const response = await fetch('dashboard_stats.json');
+                const data = await response.json();
+
+                // อัปเดตตัวเลขในหน้าเว็บ
+                document.getElementById('update-time').innerText = `อัปเดตล่าสุด: ${data.last_updated}`;
+                document.getElementById('btc-price').innerText = `$${data.market['BTC-USD'].toLocaleString()}`;
+                document.getElementById('total-views').innerText = data.engagement.total_views;
+                document.getElementById('total-likes').innerText = data.engagement.likes;
+
+                // สร้างกราฟจำลอง (หรือดึงข้อมูล Market อื่นๆ มาใส่)
+                const ctx = document.getElementById('marketChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(data.market),
+                        datasets: [{
+                            label: 'Current Price',
+                            data: Object.values(data.market),
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: { y: { beginAtZero: false, grid: { color: '#374151' } } }
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading data:", error);
+                document.getElementById('update-time').innerText = "รอการอัปเดตข้อมูลครั้งแรก...";
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
