@@ -3,84 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Raw Data Extractor Dash</title>
+    <title>Author Flight - Real-time Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; }
+    </style>
 </head>
-<body class="bg-gray-900 text-white font-sans min-h-screen">
+<body class="bg-[#0f172a] text-white min-h-screen">
 
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-blue-400 mb-6 text-center">🚀 Raw Data Extractor</h1>
-
-        <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl mb-8">
-            <label class="block text-gray-400 text-sm mb-2">ป้อน URL ที่คุณต้องการดึงข้อมูล:</label>
-            <div class="flex flex-col md:flex-row gap-4">
-                <input type="text" id="target-url" placeholder="https://example.com" 
-                       class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
-                <button onclick="fetchRawData()" 
-                        class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-8 rounded-lg transition duration-200">
-                    ดึงข้อมูลเดี๋ยวนี้!
-                </button>
+        <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+                    Author Flight Dashboard
+                </h1>
+                <p id="update-time" class="text-gray-400 text-sm mt-1">กำลังโหลดข้อมูลล่าสุด...</p>
             </div>
-            <p class="text-xs text-gray-500 mt-2">*หมายเหตุ: ข้อมูลบางเว็บอาจติดระบบป้องกัน (CORS)</p>
+            <div class="flex gap-2">
+                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs border border-emerald-500/30">● Live Auto-update</span>
+            </div>
         </div>
 
-        <div id="result-container" class="hidden">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                    <h3 class="text-blue-400 font-bold mb-2">ข้อมูลเบื้องต้น</h3>
-                    <div id="meta-data" class="text-sm space-y-1"></div>
+        <div class="mb-10">
+            <h2 class="text-xl font-semibold mb-4 text-blue-300">📈 สถิตินิยาย (ReadAWrite)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 shadow-xl">
+                    <p class="text-gray-400 text-sm">ยอดการอ่านทั้งหมด</p>
+                    <p id="novel-views" class="text-3xl font-bold text-white mt-1">--</p>
+                </div>
+                <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 shadow-xl">
+                    <p class="text-gray-400 text-sm">หัวใจ</p>
+                    <p id="novel-hearts" class="text-3xl font-bold text-pink-500 mt-1">--</p>
+                </div>
+                <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 shadow-xl">
+                    <p class="text-gray-400 text-sm">ความคิดเห็น</p>
+                    <p id="novel-comments" class="text-3xl font-bold text-blue-400 mt-1">--</p>
+                </div>
+                <div class="bg-[#1e293b] p-6 rounded-2xl border border-gray-700 shadow-xl">
+                    <p class="text-gray-400 text-sm">เพิ่มเข้าชั้น</p>
+                    <p id="novel-shelf" class="text-3xl font-bold text-emerald-400 mt-1">--</p>
+                </div>
+            </div>
+            <div class="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                <p class="text-sm text-blue-200">เรื่อง: <span id="novel-title" class="font-semibold text-white">กำลังโหลด...</span></p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 space-y-4">
+                <h2 class="text-xl font-semibold text-blue-300">💰 ราคาตลาดปัจจุบัน</h2>
+                <div class="bg-[#1e293b] p-5 rounded-2xl border border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">Bitcoin (BTC)</span>
+                        <span id="price-btc" class="text-xl font-bold text-orange-400">--</span>
+                    </div>
+                </div>
+                <div class="bg-[#1e293b] p-5 rounded-2xl border border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">Ethereum (ETH)</span>
+                        <span id="price-eth" class="text-xl font-bold text-purple-400">--</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
-                <h3 class="text-blue-400 font-bold mb-4">Raw Content (Text Only)</h3>
-                <textarea id="raw-content" readonly 
-                          class="w-full h-96 bg-gray-900 text-green-400 p-4 font-mono text-sm rounded-lg border border-gray-700"></textarea>
+            <div class="lg:col-span-2 bg-[#1e293b] p-6 rounded-2xl border border-gray-700">
+                <h2 class="text-xl font-semibold mb-6">Market Overview</h2>
+                <canvas id="marketChart" height="150"></canvas>
             </div>
         </div>
     </div>
 
     <script>
-        async function fetchRawData() {
-            const url = document.getElementById('target-url').value;
-            if (!url) return alert("กรุณาป้อน URL ก่อนครับ");
-
-            const btn = document.querySelector('button');
-            btn.innerText = "กำลังดึงข้อมูล...";
-            btn.disabled = true;
-
+        async function updateDashboard() {
             try {
-                // ใช้ AllOrigins Proxy เพื่อข้ามข้อจำกัด CORS ของเบราว์เซอร์
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                const response = await fetch(proxyUrl);
+                // ดึงข้อมูลจากไฟล์ JSON ที่ Scraper สร้างทิ้งไว้
+                const response = await fetch('dashboard_stats.json');
+                if (!response.ok) throw new Error('ยังไม่มีไฟล์ข้อมูล');
                 const data = await response.json();
+
+                // 1. อัปเดตสถิตินิยาย
+                document.getElementById('novel-title').innerText = data.novel_stats.title;
+                document.getElementById('novel-views').innerText = data.novel_stats.views;
+                document.getElementById('novel-hearts').innerText = data.novel_stats.hearts;
+                document.getElementById('novel-comments').innerText = data.novel_stats.comments;
+                document.getElementById('novel-shelf').innerText = data.novel_stats.shelf;
+
+                // 2. อัปเดตราคาตลาด
+                document.getElementById('price-btc').innerText = `$${data.market['BTC-USD'].toLocaleString()}`;
+                document.getElementById('price-eth').innerText = `$${data.market['ETH-USD'].toLocaleString()}`;
                 
-                if (data.contents) {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(data.contents, 'text/html');
-                    
-                    // แสดงผลคอนเทนเนอร์
-                    document.getElementById('result-container').classList.remove('hidden');
+                // 3. อัปเดตเวลา
+                document.getElementById('update-time').innerText = `อัปเดตข้อมูลล่าสุดเมื่อ: ${data.last_updated}`;
 
-                    // ดึง Metadata
-                    const title = doc.querySelector('title')?.innerText || 'ไม่พบหัวข้อ';
-                    const textContent = doc.body.innerText.replace(/\s+/g, ' ').trim();
+                // 4. สร้างกราฟ
+                const ctx = document.getElementById('marketChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(data.market),
+                        datasets: [{
+                            label: 'Current Price (USD)',
+                            data: Object.values(data.market),
+                            backgroundColor: ['#f59e0b', '#a855f7'],
+                            borderRadius: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { 
+                            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                            x: { ticks: { color: '#94a3b8' } }
+                        }
+                    }
+                });
 
-                    document.getElementById('meta-data').innerHTML = `
-                        <p><span class="text-gray-400">ชื่อเว็บ:</span> ${title}</p>
-                        <p><span class="text-gray-400">ความยาวตัวอักษร:</span> ${textContent.length.toLocaleString()} ตัว</p>
-                    `;
-
-                    // ใส่ Raw Text ลงใน Textarea
-                    document.getElementById('raw-content').value = textContent;
-                }
             } catch (error) {
-                alert("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
-            } finally {
-                btn.innerText = "ดึงข้อมูลเดี๋ยวนี้!";
-                btn.disabled = false;
+                console.error("Dashboard Error:", error);
+                document.getElementById('update-time').innerText = "รอการรันระบบครั้งแรกจาก GitHub Actions...";
             }
         }
+
+        updateDashboard();
+        // รีเฟรชหน้าเว็บทุก 5 นาทีเพื่อเช็คข้อมูลใหม่
+        setInterval(updateDashboard, 300000);
     </script>
 </body>
 </html>
