@@ -4,60 +4,56 @@ from bs4 import BeautifulSoup
 import json
 from datetime import datetime
 
-# --- 1. ส่วนดึงราคาเหรียญ/หุ้น ---
 def get_market_data(symbols):
     data = {}
     for symbol in symbols:
         try:
             ticker = yf.Ticker(symbol)
             hist = ticker.history(period='1d')
-            if not hist.empty:
-                current_price = hist['Close'].iloc[-1]
-                data[symbol] = round(float(current_price), 2)
-            else:
-                data[symbol] = "N/A"
+            current_price = hist['Close'].iloc[-1]
+            data[symbol] = round(float(current_price), 2)
         except:
-            data[symbol] = "Error"
+            data[symbol] = 0
     return data
 
-# --- 2. ส่วนดึงสถิตินิยายจาก ReadAWrite ---
 def get_readawrite_stats(url):
-    # สำคัญมาก: ต้องใส่ User-Agent เพื่อให้เว็บยอมให้ดึงข้อมูล
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'th-TH,th;q=0.9,en-US;q=0.8,en;q=0.7'
     }
     try:
-        response = requests.get(url, headers=headers, timeout=15)
+        response = requests.get(url, headers=headers, timeout=20)
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # เจาะจงตำแหน่งสถิติของ ReadAWrite
+        # ค้นหาชื่อเรื่อง
+        title = soup.find('h1', class_='title-name') or soup.find('h1')
+        
+        # ฟังก์ชันช่วยดึงตัวเลขจาก Class ต่างๆ
+        def extract_num(selector):
+            el = soup.select_one(selector)
+            return el.get_text(strip=True) if el else "0"
+
         stats = {
-            "title": soup.select_one('h1.title-name').get_text(strip=True) if soup.select_one('h1.title-name') else "N/A",
-            "views": soup.select_one('span.read-count').get_text(strip=True) if soup.select_one('span.read-count') else "0",
-            "hearts": soup.select_one('span.heart-count').get_text(strip=True) if soup.select_one('span.heart-count') else "0",
-            "comments": soup.select_one('span.comment-count').get_text(strip=True) if soup.select_one('span.comment-count') else "0",
-            "shelf": soup.select_one('span.add-to-shelf-count').get_text(strip=True) if soup.select_one('span.add-to-shelf-count') else "0"
+            "title": title.get_text(strip=True) if title else "รัชทายาทผ้าพันแผล",
+            "views": extract_num('.read-count'),
+            "hearts": extract_num('.heart-count'),
+            "comments": extract_num('.comment-count'),
+            "shelf": extract_num('.add-to-shelf-count')
         }
+        
+        # Debug: พิมพ์ออกหน้า Log ของ GitHub เพื่อเช็คว่าดึงได้ไหม
+        print(f"ดึงข้อมูลสำเร็จ: {stats}")
         return stats
     except Exception as e:
-        return {"error": str(e)}
+        print(f"Error Scraper: {e}")
+        return {"title": "Error", "views": "0", "hearts": "0", "comments": "0", "shelf": "0"}
 
-# --- 3. ส่วนหลักที่รันระบบ ---
 if __name__ == "__main__":
-    # ใส่ URL นิยายที่คุณส่งมา
-    novel_url = "https://www.readawrite.com/a/9467f5cee3135951bfbb28781edee037"
-    market_list = ['BTC-USD', 'ETH-USD']
-
-    print("กำลังเริ่มดึงข้อมูล...")
-    
+    url = "https://www.readawrite.com/a/9467f5cee3135951bfbb28781edee037"
     results = {
         "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "market": get_market_data(market_list),
-        "novel_stats": get_readawrite_stats(novel_url)
+        "market": get_market_data(['BTC-USD', 'ETH-USD']),
+        "novel_stats": get_readawrite_stats(url)
     }
-
-    # บันทึกข้อมูลลง JSON
     with open('dashboard_stats.json', 'w', encoding='utf-8') as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
-    
-    print("อัปเดตข้อมูลลง dashboard_stats.json เรียบร้อยแล้ว!")
