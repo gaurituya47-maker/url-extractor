@@ -3,77 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Author & Market Dashboard</title>
+    <title>Raw Data Extractor Dash</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-900 text-white font-sans">
+<body class="bg-gray-900 text-white font-sans min-h-screen">
 
     <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-10">
-            <h1 class="text-3xl font-bold text-blue-400">📊 Data Dashboard</h1>
-            <p id="update-time" class="text-gray-400 text-sm">Loading last update...</p>
+        <h1 class="text-3xl font-bold text-blue-400 mb-6 text-center">🚀 Raw Data Extractor</h1>
+
+        <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl mb-8">
+            <label class="block text-gray-400 text-sm mb-2">ป้อน URL ที่คุณต้องการดึงข้อมูล:</label>
+            <div class="flex flex-col md:flex-row gap-4">
+                <input type="text" id="target-url" placeholder="https://example.com" 
+                       class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                <button onclick="fetchRawData()" 
+                        class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-8 rounded-lg transition duration-200">
+                    ดึงข้อมูลเดี๋ยวนี้!
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">*หมายเหตุ: ข้อมูลบางเว็บอาจติดระบบป้องกัน (CORS)</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                <h2 class="text-gray-400 text-sm font-semibold mb-2">BITCOIN (USD)</h2>
-                <p id="btc-price" class="text-4xl font-bold">--</p>
+        <div id="result-container" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <h3 class="text-blue-400 font-bold mb-2">ข้อมูลเบื้องต้น</h3>
+                    <div id="meta-data" class="text-sm space-y-1"></div>
+                </div>
             </div>
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                <h2 class="text-gray-400 text-sm font-semibold mb-2">NOVEL VIEWS</h2>
-                <p id="total-views" class="text-4xl font-bold text-green-400">--</p>
-            </div>
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                <h2 class="text-gray-400 text-sm font-semibold mb-2">ENGAGEMENT (LIKES)</h2>
-                <p id="total-likes" class="text-4xl font-bold text-pink-500">--</p>
-            </div>
-        </div>
 
-        <div class="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-lg">
-            <h2 class="text-xl font-bold mb-6">Market Overview</h2>
-            <canvas id="marketChart" width="400" height="150"></canvas>
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
+                <h3 class="text-blue-400 font-bold mb-4">Raw Content (Text Only)</h3>
+                <textarea id="raw-content" readonly 
+                          class="w-full h-96 bg-gray-900 text-green-400 p-4 font-mono text-sm rounded-lg border border-gray-700"></textarea>
+            </div>
         </div>
     </div>
 
     <script>
-        async function loadData() {
+        async function fetchRawData() {
+            const url = document.getElementById('target-url').value;
+            if (!url) return alert("กรุณาป้อน URL ก่อนครับ");
+
+            const btn = document.querySelector('button');
+            btn.innerText = "กำลังดึงข้อมูล...";
+            btn.disabled = true;
+
             try {
-                // ดึงข้อมูลจากไฟล์ JSON ที่ Scraper สร้างไว้
-                const response = await fetch('dashboard_stats.json');
+                // ใช้ AllOrigins Proxy เพื่อข้ามข้อจำกัด CORS ของเบราว์เซอร์
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl);
                 const data = await response.json();
+                
+                if (data.contents) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.contents, 'text/html');
+                    
+                    // แสดงผลคอนเทนเนอร์
+                    document.getElementById('result-container').classList.remove('hidden');
 
-                // อัปเดตตัวเลขในหน้าเว็บ
-                document.getElementById('update-time').innerText = `อัปเดตล่าสุด: ${data.last_updated}`;
-                document.getElementById('btc-price').innerText = `$${data.market['BTC-USD'].toLocaleString()}`;
-                document.getElementById('total-views').innerText = data.engagement.total_views;
-                document.getElementById('total-likes').innerText = data.engagement.likes;
+                    // ดึง Metadata
+                    const title = doc.querySelector('title')?.innerText || 'ไม่พบหัวข้อ';
+                    const textContent = doc.body.innerText.replace(/\s+/g, ' ').trim();
 
-                // สร้างกราฟจำลอง (หรือดึงข้อมูล Market อื่นๆ มาใส่)
-                const ctx = document.getElementById('marketChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(data.market),
-                        datasets: [{
-                            label: 'Current Price',
-                            data: Object.values(data.market),
-                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
-                            borderRadius: 8
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: { y: { beginAtZero: false, grid: { color: '#374151' } } }
-                    }
-                });
+                    document.getElementById('meta-data').innerHTML = `
+                        <p><span class="text-gray-400">ชื่อเว็บ:</span> ${title}</p>
+                        <p><span class="text-gray-400">ความยาวตัวอักษร:</span> ${textContent.length.toLocaleString()} ตัว</p>
+                    `;
+
+                    // ใส่ Raw Text ลงใน Textarea
+                    document.getElementById('raw-content').value = textContent;
+                }
             } catch (error) {
-                console.error("Error loading data:", error);
-                document.getElementById('update-time').innerText = "รอการอัปเดตข้อมูลครั้งแรก...";
+                alert("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
+            } finally {
+                btn.innerText = "ดึงข้อมูลเดี๋ยวนี้!";
+                btn.disabled = false;
             }
         }
-
-        loadData();
     </script>
 </body>
 </html>
